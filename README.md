@@ -67,4 +67,4 @@ python -m scripts.quick_validate "path/to/earnings-brief"
 
 ## Status
 
-v0.1.0 [released](https://github.com/h-y17/earnings-brief/releases/tag/v0.1.0). Tested on real cases across markets and reporting standards (US, HK, Mandarin and English output). Feedback and issues welcome.
+v0.2.0 [released](https://github.com/h-y17/earnings-brief/releases/tag/v0.2.0). Tested end-to-end on real cases across markets and reporting standards (US, HK, Mandarin and English output; Markdown/PDF export round-tripped). Feedback and issues welcome.
