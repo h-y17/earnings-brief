@@ -7,12 +7,14 @@ A Claude Code skill that turns a company name or ticker into a quick-read earnin
 Given a public company, it finds the primary source for its latest earnings report and produces a structured summary:
 
 - Revenue, net income, EPS (GAAP and non-GAAP), gross/operating margin — with YoY and QoQ change
+- **Trend** across the last 4-5 periods, not just one comparison point
+- **vs. analyst consensus** (beat/miss/in-line), clearly labeled as third-party data the company doesn't disclose itself
 - Forward guidance (if disclosed)
 - Highlights and risks, distinguishing management's own words from the skill's own observations
-- Source links for every number
+- Source links for every number — see `earnings-brief/references/data-sources.md` for the official disclosure portal in each major market (US/SEC EDGAR, HK/HKEXnews, Japan/TDnet+EDINET, Europe)
 - A "not financial advice, verify against the primary filing" disclaimer
 
-It responds in whatever language you ask in.
+It responds in whatever language you ask in, and can export the digest to Markdown or PDF on request (`earnings-brief/scripts/export_digest.py` — pure-Python by default, no system-level install needed).
 
 ## Usage
 
@@ -61,8 +63,8 @@ python -m scripts.quick_validate "path/to/earnings-brief"
 *以上内容为快速了解用的摘要,不构成投资建议。*
 ```
 
-See `earnings-brief/SKILL.md` for the full workflow and output template.
+(Full template also includes a Trend table and a vs. Analyst Consensus section, omitted here for brevity — see `earnings-brief/SKILL.md`.)
 
 ## Status
 
-Tested locally on two real-world cases (English/US and Chinese/HK companies). Not yet published — kept local for further testing before open-sourcing.
+v0.1.0 [released](https://github.com/h-y17/earnings-brief/releases/tag/v0.1.0). Tested on real cases across markets and reporting standards (US, HK, Mandarin and English output). Feedback and issues welcome.

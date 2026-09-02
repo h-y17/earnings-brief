@@ -1,0 +1,3 @@
+# Only needed for the fpdf2 fallback backend in export_digest.py.
+# Not required at all if pandoc is installed and used instead (--engine pandoc).
+fpdf2>=2.7
