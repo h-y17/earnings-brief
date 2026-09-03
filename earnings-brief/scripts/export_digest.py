@@ -175,6 +175,28 @@ def export_with_fpdf2(input_path, output_path, font_path):
             pdf.set_font(family, "", 11)
             pdf.write(5.5, "  \u2022 ")
             write_run(line[2:], 11)
+        elif line.strip() == "```chart-data":
+            # A fenced block of "label: value" lines (optionally preceded by
+            # "title: ..."), meant only for this script -- it turns into an
+            # actual bar chart here instead of literal text. Keeping it as a
+            # plain, clearly-labeled fenced block means the .md file is still
+            # readable on its own (as data), while the PDF gets a real chart.
+            title, entries = None, []
+            i += 1
+            while i < len(lines) and lines[i].strip() != "```":
+                raw = lines[i].strip()
+                if raw:
+                    key, _, value = raw.partition(":")
+                    key, value = key.strip(), value.strip()
+                    if key.lower() == "title":
+                        title = value
+                    else:
+                        try:
+                            entries.append((key, float(re.sub(r"[^0-9.\-]", "", value))))
+                        except ValueError:
+                            pass  # skip a line that isn't parseable as label: number
+                i += 1
+            render_bar_chart(pdf, title, entries, family)
         elif line.lstrip().startswith("|"):
             # Collect the whole table block, skip the "|---|---|" separator row.
             table_rows = []
@@ -193,6 +215,46 @@ def export_with_fpdf2(input_path, output_path, font_path):
 
     pdf.output(str(output_path))
     return True, None
+
+
+def render_bar_chart(pdf, title, entries, family):
+    """Simple vertical bar chart from [(label, value), ...] -- no charting
+    library needed, just rectangles fpdf2 can already draw. Meant for a
+    handful of bars (a quarterly/annual trend), not dense data."""
+    if not entries:
+        return
+
+    if title:
+        pdf.set_font(family, "B", 11)
+        pdf.multi_cell(0, 6, title)
+        pdf.ln(1)
+
+    chart_width = pdf.w - pdf.l_margin - pdf.r_margin
+    chart_height = 40
+    bar_gap = 4
+    n = len(entries)
+    bar_width = (chart_width - bar_gap * (n - 1)) / n
+    max_value = max(value for _, value in entries) or 1
+
+    top_y = pdf.get_y() + 6  # headroom for the value label above the tallest bar
+    baseline_y = top_y + chart_height
+    x = pdf.l_margin
+
+    pdf.set_font(family, "", 8)
+    pdf.set_fill_color(90, 130, 200)
+    for label, value in entries:
+        bar_h = max((value / max_value) * chart_height, 1)
+        bar_y = baseline_y - bar_h
+        pdf.rect(x, bar_y, bar_width, bar_h, style="F")
+        pdf.set_xy(x - 2, bar_y - 5)
+        pdf.cell(bar_width + 4, 5, format(value, "g"), align="C")
+        pdf.set_xy(x - 2, baseline_y + 1)
+        pdf.cell(bar_width + 4, 5, label, align="C")
+        x += bar_width + bar_gap
+
+    pdf.set_draw_color(0, 0, 0)
+    pdf.line(pdf.l_margin, baseline_y, pdf.l_margin + chart_width, baseline_y)
+    pdf.set_y(baseline_y + 8)
 
 
 def render_table(pdf, rows, family):

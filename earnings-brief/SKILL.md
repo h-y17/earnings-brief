@@ -31,6 +31,7 @@ Turn a company name or ticker into a short, structured digest of its latest earn
    - The current release itself often includes a "selected financial data" or multi-quarter table in its supplementary tables
    - The company's IR site usually has a quarterly/annual results archive page listing headline revenue and EPS for each past period, which is much faster to skim than opening every old press release
    - If a proper multi-period breakdown isn't readily available without digging through many individual filings, use what you found already this session (e.g. the prior quarter you looked at for QoQ) rather than going on an open-ended hunt — a partial trend is still useful, and note that it's partial
+   - Right after the Trend table, add a fenced ` ```chart-data ` block with the same revenue figures as `label: number` lines (see the output template below) — a table of numbers is precise, but a bar chart makes "is this accelerating or decelerating" legible at a glance. The block is plain data, harmless to read in the raw Markdown; `scripts/export_digest.py` turns it into an actual bar chart in the PDF. Strip units/currency symbols from the values (just the number) and keep the same unit across all entries so the bars are comparable — mixing e.g. millions and billions in one chart would silently misrepresent the trend.
 
 6. **Capture forward guidance.** Companies often give a range for next quarter/year revenue or EPS in the same release or the earnings call. Include it if given; state "no guidance provided" if not — some companies deliberately don't guide.
 
@@ -42,7 +43,7 @@ Turn a company name or ticker into a short, structured digest of its latest earn
 
 10. **Export to a file only if asked.** By default, just answer in the chat — most requests don't need a saved file. If the user asks to save, export, or download the digest:
    - For Markdown, just write the digest text to a `.md` file directly (you already have file-write access; no script needed for this part).
-   - For PDF, run `scripts/export_digest.py <the .md file>` on the Markdown file you just saved. By default it uses a bundled pure-Python renderer (`fpdf2`, installed via `pip install -r scripts/requirements.txt` if missing) that needs no system-level dependency — this is the path that works for anyone regardless of what's installed on their machine. If `pandoc` happens to be installed already, pass `--engine pandoc` for noticeably nicer typesetting; it's an optional upgrade, not something to ask the user to install just for this.
+   - For PDF, run `scripts/export_digest.py <the .md file>` on the Markdown file you just saved. By default it uses a bundled pure-Python renderer (`fpdf2`, installed via `pip install -r scripts/requirements.txt` if missing) that needs no system-level dependency — this is the path that works for anyone regardless of what's installed on their machine. It also renders any ` ```chart-data ` block (see step 5) as an actual bar chart, drawn directly with fpdf2 rather than a charting library. If `pandoc` happens to be installed already, pass `--engine pandoc` for noticeably nicer typesetting; it's an optional upgrade, not something to ask the user to install just for this — note that the pandoc path does *not* render the chart-data block into a chart (pandoc doesn't know what it means), so it'll show up as a plain code block instead.
    - **Chinese/Japanese/Korean or other non-Latin digests, specifically:** the fpdf2 path needs a font file that actually contains those glyphs. It auto-detects a common system font first (this generally just works on Windows and macOS, which ship one by default), but on a machine without one — a bare Linux server is the typical case — it will stop with an error rather than silently produce a PDF full of missing-glyph boxes, and tell you to pass `--font path/to/a/unicode/font.ttf`. If that happens, point the user at a free option like [Noto Sans SC](https://fonts.google.com/noto/specimen/Noto+Sans+SC) (or the Japanese/Korean equivalent) to download once and reuse.
 
 ## Output template
@@ -76,6 +77,12 @@ Use this structure (translate headers into the user's language; keep the shape):
 |---|---|---|---|
 | ... | | | |
 
+​```chart-data
+title: Revenue Trend ([unit])
+[Period]: [number, no currency/unit symbols]
+...
+​```
+
 ## Guidance
 [Forward guidance, or "No guidance provided."]
 
@@ -100,3 +107,4 @@ Use this structure (translate headers into the user's language; keep the shape):
 - **User asks to compare two periods or two companies**: extend the table with extra columns rather than producing two separate digests — that's usually what they actually want to see side by side.
 - **Too little history to show a trend** (recent IPO, spinoff, or a company that just changed its segment/reporting structure): show whatever periods are genuinely comparable and say why the trend is short, rather than reaching further back into numbers that aren't apples-to-apples (e.g. don't splice pre- and post-restructuring segment revenue into one row).
 - **No consensus estimate found**: drop the "vs. Analyst Consensus" section (or state "no consensus estimate found") rather than presenting one stray blog/forum number as if it were the market's view — a single unverified estimate is worse than none.
+- **Trend is only 1-2 periods** (e.g. right after an IPO): skip the `chart-data` block — a bar chart of two points doesn't add anything over just reading the two numbers, and drawing one anyway would overstate how much trend data actually exists.
